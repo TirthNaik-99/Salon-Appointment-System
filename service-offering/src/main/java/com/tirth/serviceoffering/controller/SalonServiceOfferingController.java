@@ -5,12 +5,13 @@ import com.tirth.serviceoffering.dto.SalonDTO;
 import com.tirth.serviceoffering.dto.ServiceDTO;
 import com.tirth.serviceoffering.modal.ServiceOffering;
 import com.tirth.serviceoffering.service.ServiceOfferingService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
-
+@Data
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/service-offering/salon-owner")

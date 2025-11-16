@@ -2,11 +2,14 @@ package com.tirth.serviceoffering.dto;
 
 import jakarta.persistence.Column;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 @Data
 public class ServiceDTO {
+
 
     private Long id;
 
@@ -23,4 +26,5 @@ public class ServiceDTO {
     private Long category;
 
     private List<String> images;
+
 }

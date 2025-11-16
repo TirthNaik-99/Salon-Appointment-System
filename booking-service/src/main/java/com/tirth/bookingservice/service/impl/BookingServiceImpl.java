@@ -10,6 +10,7 @@ import com.tirth.bookingservice.modal.SalonReport;
 import com.tirth.bookingservice.repository.BookingRepository;
 import com.tirth.bookingservice.service.BookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -84,36 +85,86 @@ public class BookingServiceImpl implements BookingService {
                 throw new Exception("slot not available, choose different time.");
             }
         }
-        return false;
+        return true;
     }
 
     @Override
     public List<Booking> getBookingsByCustomer(Long customerId) {
-        return List.of();
+        return bookingRepository.findByCustomerId(customerId);
     }
 
     @Override
     public List<Booking> getBookingsBySalon(Long salonId) {
-        return List.of();
+        return bookingRepository.findBySalonId(salonId);
     }
 
     @Override
-    public Booking getBookingById(Long id) {
-        return null;
+    public Booking getBookingById(Long id) throws Exception {
+        Booking booking = bookingRepository.findById(id).orElse(null);
+        if(booking == null){
+            throw new Exception("booking not found");
+        }
+        return booking;
     }
 
     @Override
-    public Booking updateBooking(Long bookingId, BookingStatus status) {
-        return null;
+    public Booking updateBooking(Long bookingId, BookingStatus status) throws Exception {
+        Booking booking = getBookingById(bookingId);
+        booking.setStatus(status);
+        return bookingRepository.save(booking);
     }
 
     @Override
     public List<Booking> getBookingByDate(LocalDate date, Long salonId) {
-        return List.of();
+        List<Booking> allBookings = getBookingsBySalon(salonId);
+        if(date ==null){
+            return allBookings;
+        }
+
+        return allBookings.stream()
+                .filter(booking -> isSameDate(booking.getStartTime(),date) ||
+                        isSameDate(booking.getEndTime(),date))
+                .collect(Collectors.toList());
+    }
+
+    private boolean isSameDate(LocalDateTime dateTime, LocalDate date) {
+        return dateTime.toLocalDate().isEqual(date);
     }
 
     @Override
     public SalonReport getSalonReport(Long salonId) {
-        return null;
+        List<Booking> bookings = getBookingsBySalon(salonId);
+
+        int totalEarnings = bookings.stream()
+                .mapToInt(Booking::getTotalPrice)
+                .sum();
+
+        Integer totalBooking = bookings.size();
+
+        List<Booking> cancelledBookings = bookings.stream()
+                .filter(booking -> booking.getStatus().equals(BookingStatus.CANCELLED))
+                .collect(Collectors.toList());
+
+        Double totalRefund = cancelledBookings.stream()
+                .mapToDouble(Booking::getTotalPrice)
+                .sum();
+
+        SalonReport report = new SalonReport();
+        report.setSalonId(salonId);
+        report.setCancelledBookings(cancelledBookings.size());
+        report.setTotalBookings(totalBooking);
+        report.setTotalEarnings(totalEarnings);
+        report.setTotalRefund(totalRefund);
+
+        return report;
+    }
+
+    @Override
+    public void deleteBooking(Long bookingId) throws Exception{
+        Booking booking = getBookingById(bookingId);
+        if(booking == null){
+            throw new Exception("booking with id" + bookingId + " not found");
+        }
+        bookingRepository.delete(booking);
     }
 }
